@@ -18,6 +18,20 @@ void bubbleSort(vector<int>& v) {
     }
 }
 
+void bubbleSortAnother(vector<int>& v) {
+  int sz = v.size();
+  int flag = true;
+  for(int i = 0; i < sz && flag; ++i) {
+    flag = false;
+    for(int j = sz - 1; j >= i + 1; --j) {
+      if(v[j] < v[j - 1]) {
+        swap(v[j], v[j - 1]);
+        flag = true;
+      }
+    }
+  }
+}
+
 void print(const vector<int>& v) {
     ostream_iterator<int> out(cout, " ");
     copy(v.begin(), v.end(), out);
@@ -34,7 +48,7 @@ int main() {
     cout << "before sort: " << endl;
     print(v);
     cout << endl;
-    bubbleSort(v);
+    bubbleSortAnother(v);
     cout << "after sort: " << endl;
     print(v);
     cout << endl;
