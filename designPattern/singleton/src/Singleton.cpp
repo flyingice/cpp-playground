@@ -8,7 +8,7 @@ Singleton& Singleton::GetInstance() {
   // the local static variable initialization is thread-safe since C++11
   static Singleton instance;
 
-  if(_isDestroyed) OnDeadReference();
+  if (_isDestroyed) OnDeadReference();
   return instance;
 }
 
