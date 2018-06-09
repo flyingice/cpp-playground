@@ -1,11 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <string>
 #include <iterator>
 #include <algorithm>
 #include <vector>
-#include <deque>
+#include <list>
 using namespace std;
 
 /*
@@ -21,96 +20,103 @@ example input file:
 3
 8
 */
+void initVec(ifstream& stream, vector<int>& v) {
+  if (stream) {
+    size_t nb;
+    stream >> nb;
+    for (size_t i = 0; i < nb; ++i) {
+      int x;
+      if (stream >> x) v.push_back(x);
+    }
+  }
+}
+
 void init(vector<int>& a, vector<int>& b) {
   ifstream infile("input");
 
-  a.clear(); 
-  b.clear();
+  if (infile) {
+    a.clear();
+    b.clear();
 
-  if(infile) {
-    size_t nb;
-
-    infile >> nb;
-    for(size_t i = 0; i < nb; ++i) {
-      int x;
-      infile >> x;
-      a.push_back(x);
-    }
-
-    infile >> nb;
-    for(size_t i = 0; i < nb; ++i) {
-      int y;
-      infile >> y;
-      b.push_back(y);
-    }
+    initVec(infile, a);
+    initVec(infile, b);
   }
 }
 
-void fetchNextCard(deque<int>& a, deque<int>& b, int& a1, int& b1) {
-  if (!a.empty() && !b.empty()) {
-    a1 = a.front();
-    b1 = b.front();
-    a.pop_front();
-    b.pop_front();
-  } else {
-    exit(1);
+/*
+ * Return true if both parties have next available card, otherwise return false.
+ */
+bool fetchNextCard(list<int>& playerA, int& cardA, list<int>& playerB, int& cardB) {
+  if (!playerA.empty() && !playerB.empty()) {
+    cardA = playerA.front();
+    cardB = playerB.front();
+    playerA.pop_front();
+    playerB.pop_front();
+    return true;
   }
+
+  return false;
 }
 
-void keepCardAside(vector<int>& aTmp, vector<int>& bTmp, int a1, int b1) {
-  aTmp.push_back(a1);
-  bTmp.push_back(b1);
+void keepCardAside(list<int>& playerATmp, int cardA, list<int>& playerBTmp, int cardB) {
+  playerATmp.push_back(cardA);
+  playerBTmp.push_back(cardB);
+}
+
+/*
+ * Return true if the round can be finished, otherwise return false.
+ */
+bool playNextRound(
+    list<int>& playerA, list<int>& playerATmp, int& a, list<int>& playerB, list<int>& playerBTmp, int& b) {
+  if (fetchNextCard(playerA, a, playerB, b)) {
+    keepCardAside(playerATmp, a, playerBTmp, b);
+    return true;
+  }
+
+  return false;
 }
 
 string play(const vector<int>& deckA, const vector<int>& deckB) {
-  deque<int> a, b;
-  copy(deckA.begin(), deckA.end(), back_inserter(a));
-  copy(deckB.begin(), deckB.end(), back_inserter(b));
+  list<int> playerA, playerB;
+  copy(deckA.begin(), deckA.end(), back_inserter(playerA));
+  copy(deckB.begin(), deckB.end(), back_inserter(playerB));
 
   size_t turn = 0;
-  vector<int> aTmp, bTmp;
-  int a1, b1;
-  while(a.size() && b.size()) {
-    fetchNextCard(a, b, a1, b1);
-    keepCardAside(aTmp, bTmp, a1, b1);
+  int a = -1, b = -1;  // init value doesn't matter
+  list<int> playerATmp, playerBTmp;
+  while (!playerA.empty() && !playerB.empty()) {
+    ++turn;
 
-    while(a1 == b1) {
-      // skip the next card
-      fetchNextCard(a, b, a1, b1);
-      keepCardAside(aTmp, bTmp, a1, b1);
+    if (!playNextRound(playerA, playerATmp, a, playerB, playerBTmp, b)) break;
 
-      fetchNextCard(a, b, a1, b1);
-      keepCardAside(aTmp, bTmp, a1, b1);
+    while (a == b) {  // a war
+      // If one player is run out of card during a war, it is considered to be a draw.
+      if (!(playNextRound(playerA, playerATmp, a, playerB, playerBTmp, b)
+            && playNextRound(playerA, playerATmp, a, playerB, playerBTmp, b))) {
+        return "Draw " + to_string(turn);
+      }
     }
 
-    if(a1 < b1) {
-      copy(bTmp.begin(), bTmp.end(), back_inserter(b));
-      copy(aTmp.begin(), aTmp.end(), back_inserter(b));
-    } else if (a1 > b1) {
-      copy(aTmp.begin(), aTmp.end(), back_inserter(a));
-      copy(bTmp.begin(), bTmp.end(), back_inserter(a));
+    if (a < b) {
+      copy(playerBTmp.begin(), playerBTmp.end(), back_inserter(playerB));
+      copy(playerATmp.begin(), playerATmp.end(), back_inserter(playerB));
+    }
+    else {
+      copy(playerATmp.begin(), playerATmp.end(), back_inserter(playerA));
+      copy(playerBTmp.begin(), playerBTmp.end(), back_inserter(playerA));
     }
 
-    aTmp.clear(); bTmp.clear();
-    turn++;
+    playerATmp.clear();
+    playerBTmp.clear();
   }
 
-  ostringstream os;
-  os << (a.size() > 0 ? "1" : "2") << " " << turn; 
-  return os.str();
+  return (playerA.empty() ? "2 " : "1 ") + to_string(turn);
 }
 
 int main() {
-  vector<int> a, b;
-  init(a, b);
-
-  ostream_iterator<int> out(cout, " ");
-  copy(a.begin(), a.end(), out);
-  cout << endl;
-  copy(b.begin(), b.end(), out);
-  cout << endl;
-
-  cout << play(a, b) << endl;
+  vector<int> playerA, playerB;
+  init(playerA, playerB);
+  cout << play(playerA, playerB) << endl;
 
   return 0;
 }
