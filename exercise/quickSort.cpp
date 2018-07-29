@@ -1,3 +1,4 @@
+#include <chrono>
 #include <vector>
 #include <iostream>
 #include <iterator>
@@ -98,8 +99,20 @@ void runAndCheck(fp f, vector<int>& v, const string& fName) {
 int main() {
   vector<int> v;
   srand(time(NULL));
- 
+
   runAndCheck(&quickSortRecursiveA, v, "quickSortRecursiveA");
   runAndCheck(&quickSortRecursiveB, v, "quickSortRecursiveB");
   runAndCheck(&quickSortIterative, v, "quickSortIterative");
+
+  /* Performance check to sort 1GB 4-byte integers: above 20s
+   * In thoery according to Jeff Dean of Google,
+   * sort time = comparaison time (branch miss) + memory access
+   *  = 2^28 * log(2 ^ 28) * 5ns + 28 * 1GB / 4GB/s = 21s + 7s = 28s
+   */
+  randomGenerator(v, 1 << 28, RAND_MAX);
+  auto begin = chrono::system_clock::now();
+  sort(v.begin(), v.end());
+  auto end = chrono::system_clock::now();
+  cout << "elapse time to sort 1GB integers: " << chrono::duration_cast<chrono::seconds>(end - begin).count() << "s"
+       << endl;
 }
