@@ -14,7 +14,8 @@
                 "${file}",
             ],
             "presentation": {
-                "reveal": "silent",
+                "focus": true,
+                "reveal": "always",
                 "panel": "dedicated",
             },
             "group": {
