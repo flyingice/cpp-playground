@@ -6,22 +6,30 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "clang++",
+            "command": "/usr/bin/clang++",
             "args": [
                 "-std=c++17",
                 "-Wall",
                 "-g",
                 "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}"
             ],
+            "options": {
+                "cwd": "/usr/bin"
+            },
             "presentation": {
                 "focus": true,
                 "reveal": "always",
-                "panel": "dedicated",
+                "panel": "dedicated"
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
     ]
 }
