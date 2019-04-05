@@ -10,6 +10,7 @@
             "args": [
                 "-std=c++17",
                 "-Wall",
+                "-lboost_filesystem",
                 "-g",
                 "${file}",
                 "-o",
