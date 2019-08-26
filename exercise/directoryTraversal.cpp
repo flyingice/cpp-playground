@@ -2,6 +2,7 @@
 #include <boost/filesystem.hpp>
 #include <ctime>
 #include <iostream>
+#include <string>
 #include <vector>
 using namespace std;
 using namespace boost::filesystem;
@@ -36,10 +37,40 @@ time_t findLastWriteSubDirectory(const path& iAbsPath) {
   }
 }
 
+struct UnaryPredicate {
+  UnaryPredicate(const string& iFilename) : filename(iFilename) {
+  }
+
+  bool operator()(const path& iPath) const {
+    return iPath.filename() == filename;
+  };
+
+  string filename;
+};
+
+void traverseDirectoryRecursive(const path& iPath, UnaryPredicate p) {
+  for (auto it = directory_iterator(iPath); it != directory_iterator(); it++) {
+    if (is_directory(it->path())) {
+      traverseDirectoryRecursive(it->path(), p);
+    }
+    else {
+      if (p(*it)) cout << "found " << it->path().filename() << endl;
+    }
+  }
+}
+
+void traverseDirectory(const path& iPath) {
+  for (auto it = recursive_directory_iterator(iPath); it != recursive_directory_iterator(); it++) {
+    cout << it->path() << endl;
+  }
+}
+
 int main() {
   const string target("/Users/rainforest/");
   time_t t = findLastWriteSubDirectory(target);
   cout << "The last write directory under " << target << " was updated on " << ctime(&t);
+
+  traverseDirectoryRecursive("/Users/rainforest/Downloads", UnaryPredicate("rdv.pdf"));
 
   return 0;
 }
